@@ -1,55 +1,40 @@
 import pygame
 import sys
-from random import randint, random
 import time
 import random
-from pygame.math import Vector2
 from pygame.locals import *
 
 
-def vector2(xy_tuple, scale):    # work-around for macOs mojave unexpected args warning
-    v = Vector2()
-    v[0], v[1] = xy_tuple[0], xy_tuple[1]
-    return v * scale
-
-
-def move_ball(xy_tuple, scale):
-    v = Vector2()
-    v[0], v[1] = xy_tuple[0], xy_tuple[1]
-    return v * scale
-
-
-def scoreboard(player_score, computer_score, player_matches, computer_matches, player_needed, computer_needed):
-
-    #Games won scoreboard
-    scoreprint = "Computer: " + str(computer_point)
+def scoreboard(player_score, computer_score, player_matche, computer_match, player_need, computer_need):
+    # Games won scoreboard
+    scoreprint = "Computer: " + str(computer_score)
     text = font.render(scoreprint, 10, WHITE)
     textpos = (WINDOW_WIDTH / 4, PADDLE_HEIGHT + PADDLE_HEIGHT / 2)
     window_surface.blit(text, textpos)
 
-    scoreprint = "Player: " + str(player_point)
+    scoreprint = "Player: " + str(player_score)
     text = font.render(scoreprint, 1, WHITE)
     textpos = (WINDOW_WIDTH / 2 + WINDOW_WIDTH / 8, PADDLE_HEIGHT + PADDLE_HEIGHT / 2)
     window_surface.blit(text, textpos)
 
     # Matches won scoreboard
-    matchprint = "Matches won: " + str(player_matches)
+    matchprint = "Matches won: " + str(player_matche)
     text = font.render(matchprint, 1, WHITE)
     matchprint_pos = (WINDOW_WIDTH / 2 + WINDOW_WIDTH / 8, PADDLE_HEIGHT + PADDLE_HEIGHT / 2 + 50)
     window_surface.blit(text, matchprint_pos)
 
-    matchprint = "Matches won: " + str(computer_matches)
+    matchprint = "Matches won: " + str(computer_match)
     text = font.render(matchprint, 1, WHITE)
     matchprint_pos = (WINDOW_WIDTH / 4, PADDLE_HEIGHT + PADDLE_HEIGHT / 2 + 50)
     window_surface.blit(text, matchprint_pos)
 
     # Matches Needed to win
-    points_needed = "Points Needed: " + str(computer_needed)
+    points_needed = "Points Needed: " + str(computer_need)
     text = font.render(points_needed, 1, WHITE)
     needed_pos = (WINDOW_WIDTH / 4, PADDLE_HEIGHT + PADDLE_HEIGHT / 2 + 100)
     window_surface.blit(text, needed_pos)
 
-    points_needed = "Points Needed: " + str(player_needed)
+    points_needed = "Points Needed: " + str(player_need)
     text = font.render(points_needed, 1, WHITE)
     needed_pos = (WINDOW_WIDTH / 2 + WINDOW_WIDTH / 8, PADDLE_HEIGHT + PADDLE_HEIGHT / 2 + 100)
     window_surface.blit(text, needed_pos)
@@ -77,7 +62,6 @@ move_left = False
 move_right = False
 move_up = False
 move_down = False
-
 
 ball_rect_up = False
 ball_rect_down = False
@@ -139,11 +123,11 @@ ball_rect = ball_image.get_rect()
 ball_stretched = pygame.transform.scale(ball_image, (BALL_WIDTH, BALL_HEIGHT))
 ball_rect.center = (WINDOW_WIDTH / 2 + BALL_WIDTH, WINDOW_HEIGHT / 2 + BALL_HEIGHT)
 
-
 # Setup Sounds
 collision_sound = pygame.mixer.Sound('hit.wav')
 
 random.seed(time)
+
 # Initial Ball movement
 random_start = random.randint(0, 3)
 if random_start == 0:
@@ -158,7 +142,6 @@ elif random_start == 2:
 else:
     ball_rect_down = True
     ball_rect_left = True
-
 
 play_again = True
 while play_again:
@@ -246,7 +229,7 @@ while play_again:
         ball_rect.right -= MOVE_SPEED
 
     # Computer Paddle AI
-    if ball_rect.top > computer_left_rect.top > 0:
+    if ball_rect.top > computer_left_rect.top and computer_left_rect.bottom > 0:
         computer_left_rect.top += MOVE_SPEED
     if ball_rect.midleft > computer_top_rect.center and computer_top_rect.right < WINDOW_WIDTH / 2:
         computer_top_rect.left += MOVE_SPEED
@@ -268,14 +251,17 @@ while play_again:
             player_matches += 1
             if player_matches == 3:
                 winner = "WINNER: PLAYER"
-                replay = "Press \'P\' to play again!"
+                replay = "Press \'Q\' to quit!"
                 text2 = font.render(winner, 40, WHITE)
                 winnerpos = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2)
                 replaypos = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 + 100)
                 window_surface.blit(text2, winner)
                 window_surface.blit(text2, replay)
-                if event.key == K_p:
-                    play_again = True
+                for event in pygame.event.get():
+                    if event.key == K_p:
+                        play_again = True
+                        pygame.quit()
+                        sys.exit()
 
         if computer_point == 11 and computer_point >= 2 + player_point:
             computer_matches += 1
@@ -287,13 +273,19 @@ while play_again:
                 replaypos = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 + 100)
                 window_surface.blit(text2, winner)
                 window_surface.blit(text2, replay)
-                if event.key == K_p:
-                    play_again = True
+                for event in pygame.event.get():
+                    if event.key == K_p:
+                        play_again = True
+                        pygame.quit()
+                        sys.exit()
+        ball_rect.center = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2)
 
     scoreboard(player_point, computer_point, player_matches, computer_matches, player_needed, computer_needed)
 
-
     # Display Paddles and Balls
+    # Display Middle Net
+    for y in range(40, WINDOW_HEIGHT - 50, 50):
+        pygame.draw.rect(window_surface, WHITE, (WINDOW_WIDTH // 2 - 5, y, 10, 30), 0)
     window_surface.blit(ball_stretched, ball_rect)
     window_surface.blit(player_stretched_right_paddle, player_right_rect)
     window_surface.blit(player_stretched_top_paddle, player_top_rect)
@@ -301,10 +293,6 @@ while play_again:
     window_surface.blit(computer_stretched_left_paddle, computer_left_rect)
     window_surface.blit(computer_stretched_top_paddle, computer_top_rect)
     window_surface.blit(computer_stretched_bottom_paddle, computer_bottom_rect)
-
-    # Display Middle Net
-    for y in range(40, WINDOW_HEIGHT - 50, 50):
-        pygame.draw.rect(window_surface, WHITE, (WINDOW_WIDTH // 2 - 5, y, 10, 30), 0)
 
     pygame.display.update()
     main_clock.tick(60)
