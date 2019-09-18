@@ -240,15 +240,21 @@ while play_again:
     if ball_rect.bottom < computer_left_rect.bottom and computer_left_rect.bottom > WINDOW_HEIGHT:
         computer_left_rect.top -= MOVE_SPEED
 
-    # Collect game points and
+    # Collect game points
     if ball_rect.bottom > WINDOW_HEIGHT or ball_rect.bottom > WINDOW_WIDTH or ball_rect.bottom < 0:
         if ball_rect.bottom > int(WINDOW_HEIGHT / 2):
             player_point += 1
+            if not (player_point and computer_point >= 9) and (computer_point + 2 > player_point):
+                player_needed -= 1
         else:
             computer_point += 1
+            if not (player_point and computer_point >= 9) and (computer_point < player_point + 2):
+                computer_needed -= 1
 
         if player_point == 11 and player_point >= 2 + computer_point:
             player_matches += 1
+            player_point = 0
+            computer_point = 0
             if player_matches == 3:
                 winner = "WINNER: PLAYER"
                 replay = "Press \'Q\' to quit!"
