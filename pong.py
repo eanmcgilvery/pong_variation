@@ -1,14 +1,58 @@
 import pygame
 import sys
-import random
+from random import randint, random
 import time
 import random
 from pygame.math import Vector2
 from pygame.locals import *
 
-def move_ball(self):
-    self.x += self.velocity
-    self.y += self.angle
+
+def vector2(xy_tuple, scale):    # work-around for macOs mojave unexpected args warning
+    v = Vector2()
+    v[0], v[1] = xy_tuple[0], xy_tuple[1]
+    return v * scale
+
+
+def move_ball(xy_tuple, scale):
+    v = Vector2()
+    v[0], v[1] = xy_tuple[0], xy_tuple[1]
+    return v * scale
+
+
+def scoreboard(player_score, computer_score, player_matches, computer_matches, player_needed, computer_needed):
+
+    #Games won scoreboard
+    scoreprint = "Computer: " + str(computer_point)
+    text = font.render(scoreprint, 10, WHITE)
+    textpos = (WINDOW_WIDTH / 4, PADDLE_HEIGHT + PADDLE_HEIGHT / 2)
+    window_surface.blit(text, textpos)
+
+    scoreprint = "Player: " + str(player_point)
+    text = font.render(scoreprint, 1, WHITE)
+    textpos = (WINDOW_WIDTH / 2 + WINDOW_WIDTH / 8, PADDLE_HEIGHT + PADDLE_HEIGHT / 2)
+    window_surface.blit(text, textpos)
+
+    # Matches won scoreboard
+    matchprint = "Matches won: " + str(player_matches)
+    text = font.render(matchprint, 1, WHITE)
+    matchprint_pos = (WINDOW_WIDTH / 2 + WINDOW_WIDTH / 8, PADDLE_HEIGHT + PADDLE_HEIGHT / 2 + 50)
+    window_surface.blit(text, matchprint_pos)
+
+    matchprint = "Matches won: " + str(computer_matches)
+    text = font.render(matchprint, 1, WHITE)
+    matchprint_pos = (WINDOW_WIDTH / 4, PADDLE_HEIGHT + PADDLE_HEIGHT / 2 + 50)
+    window_surface.blit(text, matchprint_pos)
+
+    # Matches Needed to win
+    points_needed = "Points Needed: " + str(computer_needed)
+    text = font.render(points_needed, 1, WHITE)
+    needed_pos = (WINDOW_WIDTH / 4, PADDLE_HEIGHT + PADDLE_HEIGHT / 2 + 100)
+    window_surface.blit(text, needed_pos)
+
+    points_needed = "Points Needed: " + str(player_needed)
+    text = font.render(points_needed, 1, WHITE)
+    needed_pos = (WINDOW_WIDTH / 2 + WINDOW_WIDTH / 8, PADDLE_HEIGHT + PADDLE_HEIGHT / 2 + 100)
+    window_surface.blit(text, needed_pos)
 
 
 pygame.init()
@@ -34,6 +78,12 @@ move_right = False
 move_up = False
 move_down = False
 
+
+ball_rect_up = False
+ball_rect_down = False
+ball_rect_left = False
+ball_rect_right = False
+
 # Setup Player Paddles
 
 PADDLE_R_HEIGHT = 180
@@ -47,6 +97,12 @@ BALL_HEIGHT = 70
 
 player_point = 0
 computer_point = 0
+player_matches = 0
+computer_matches = 0
+player_needed = 11
+computer_needed = 11
+
+winner = {False: 'player'}
 
 player_right_paddle_image = pygame.image.load('PLAYER_PAD.png')
 player_stretched_right_paddle = pygame.transform.scale(player_right_paddle_image, (PADDLE_R_WIDTH, PADDLE_R_HEIGHT))
@@ -83,11 +139,26 @@ ball_rect = ball_image.get_rect()
 ball_stretched = pygame.transform.scale(ball_image, (BALL_WIDTH, BALL_HEIGHT))
 ball_rect.center = (WINDOW_WIDTH / 2 + BALL_WIDTH, WINDOW_HEIGHT / 2 + BALL_HEIGHT)
 
+
 # Setup Sounds
 collision_sound = pygame.mixer.Sound('hit.wav')
 
 random.seed(time)
-ball_start = random.randint(1, 6)
+# Initial Ball movement
+random_start = random.randint(0, 3)
+if random_start == 0:
+    ball_rect_up = True
+    ball_rect_right = True
+elif random_start == 1:
+    ball_rect_up = True
+    ball_rect_left = True
+elif random_start == 2:
+    ball_rect_down = True
+    ball_rect_right = True
+else:
+    ball_rect_down = True
+    ball_rect_left = True
+
 
 play_again = True
 while play_again:
@@ -138,44 +209,44 @@ while play_again:
         player_top_rect.right -= MOVE_SPEED
         player_bottom_rect.right -= MOVE_SPEED
 
-    # Ball movement
-    if ball_start == 1:
-        ball_rect.top -= MOVE_SPEED
-        ball_rect.right += MOVE_SPEED
-    elif ball_start == 2:
-        ball_rect.top += MOVE_SPEED
-        ball_rect.right += MOVE_SPEED
-    elif ball_start == 3:
-        ball_rect.top += MOVE_SPEED
-        ball_rect.right -= MOVE_SPEED
-    elif ball_start == 4:
-        ball_rect.right -= MOVE_SPEED
-    elif ball_start == 5:
-        ball_rect.right += MOVE_SPEED
-    else:
-        ball_rect.top -= MOVE_SPEED
-        ball_rect.right -= MOVE_SPEED
-
-    # Check for collisions
+    # Check ball collisions
     if player_top_rect.colliderect(ball_rect):
-        ball_rect.top -= MOVE_SPEED
-    # collision_sound.play()
+        ball_rect_up = False
+        ball_rect_down = True
+        collision_sound.play()
     if computer_top_rect.colliderect(ball_rect):
-        ball_rect.top -= MOVE_SPEED
-        # collision_sound.play()
+        ball_rect_up = False
+        ball_rect_down = True
+        collision_sound.play()
     if computer_bottom_rect.colliderect(ball_rect):
-        ball_rect.top += MOVE_SPEED
-    # collision_sound.play()
+        ball_rect_down = False
+        ball_rect_up = True
+        collision_sound.play()
     if player_bottom_rect.colliderect(ball_rect):
-        ball_rect.top += MOVE_SPEED
-        # collision_sound.play()
+        ball_rect_down = False
+        ball_rect_up = True
+        collision_sound.play()
     if player_right_rect.colliderect(ball_rect):
-        ball_rect.left -= MOVE_SPEED
+        ball_rect_right = False
+        ball_rect_left = True
+        collision_sound.play()
     if computer_left_rect.colliderect(ball_rect):
-        ball_rect.left += MOVE_SPEED
+        ball_rect_right = True
+        ball_rect_left = False
+        collision_sound.play()
+
+    # Ball speed
+    if ball_rect_up:
+        ball_rect.top -= MOVE_SPEED
+    if ball_rect_down:
+        ball_rect.top += MOVE_SPEED
+    if ball_rect_right:
+        ball_rect.right += MOVE_SPEED
+    if ball_rect_left:
+        ball_rect.right -= MOVE_SPEED
 
     # Computer Paddle AI
-    if ball_rect.center > computer_left_rect.center and computer_left_rect.top > 0:
+    if ball_rect.top > computer_left_rect.top > 0:
         computer_left_rect.top += MOVE_SPEED
     if ball_rect.midleft > computer_top_rect.center and computer_top_rect.right < WINDOW_WIDTH / 2:
         computer_top_rect.left += MOVE_SPEED
@@ -183,26 +254,44 @@ while play_again:
     if ball_rect.midleft < computer_top_rect.center and computer_top_rect.left > 0:
         computer_top_rect.left -= MOVE_SPEED
         computer_bottom_rect.left -= MOVE_SPEED
-    if ball_rect.center < computer_left_rect.center and computer_left_rect.bottom > WINDOW_HEIGHT:
+    if ball_rect.bottom < computer_left_rect.bottom and computer_left_rect.bottom > WINDOW_HEIGHT:
         computer_left_rect.top -= MOVE_SPEED
 
+    # Collect game points and
     if ball_rect.bottom > WINDOW_HEIGHT or ball_rect.bottom > WINDOW_WIDTH or ball_rect.bottom < 0:
         if ball_rect.bottom > int(WINDOW_HEIGHT / 2):
             player_point += 1
         else:
             computer_point += 1
 
-    if computer_top_rect.right > WINDOW_WIDTH / 2:
-        computer_top_rect
-    scoreprint = "Computer 1: " + str(computer_point)
-    text = font.render(scoreprint, 10, WHITE)
-    textpos = (WINDOW_WIDTH / 4, PADDLE_HEIGHT + PADDLE_HEIGHT / 2)
-    window_surface.blit(text, textpos)
+        if player_point == 11 and player_point >= 2 + computer_point:
+            player_matches += 1
+            if player_matches == 3:
+                winner = "WINNER: PLAYER"
+                replay = "Press \'P\' to play again!"
+                text2 = font.render(winner, 40, WHITE)
+                winnerpos = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2)
+                replaypos = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 + 100)
+                window_surface.blit(text2, winner)
+                window_surface.blit(text2, replay)
+                if event.key == K_p:
+                    play_again = True
 
-    scoreprint = "Player: " + str(player_point)
-    text = font.render(scoreprint, 1, WHITE)
-    textpos = (WINDOW_WIDTH / 2 + WINDOW_WIDTH / 8, PADDLE_HEIGHT + PADDLE_HEIGHT / 2)
-    window_surface.blit(text, textpos)
+        if computer_point == 11 and computer_point >= 2 + player_point:
+            computer_matches += 1
+            if computer_matches == 3:
+                winner = "WINNER: COMPUTER"
+                replay = "Press \'P\' to play again!"
+                text2 = font.render(winner, 40, WHITE)
+                winnerpos = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2)
+                replaypos = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 + 100)
+                window_surface.blit(text2, winner)
+                window_surface.blit(text2, replay)
+                if event.key == K_p:
+                    play_again = True
+
+    scoreboard(player_point, computer_point, player_matches, computer_matches, player_needed, computer_needed)
+
 
     # Display Paddles and Balls
     window_surface.blit(ball_stretched, ball_rect)
@@ -212,6 +301,10 @@ while play_again:
     window_surface.blit(computer_stretched_left_paddle, computer_left_rect)
     window_surface.blit(computer_stretched_top_paddle, computer_top_rect)
     window_surface.blit(computer_stretched_bottom_paddle, computer_bottom_rect)
+
+    # Display Middle Net
+    for y in range(40, WINDOW_HEIGHT - 50, 50):
+        pygame.draw.rect(window_surface, WHITE, (WINDOW_WIDTH // 2 - 5, y, 10, 30), 0)
 
     pygame.display.update()
     main_clock.tick(60)
